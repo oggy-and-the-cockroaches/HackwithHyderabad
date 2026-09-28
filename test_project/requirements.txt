@@ -1,0 +1,7 @@
+# Test Project Requirements
+fastapi==0.141.1
+uvicorn==0.54.0
+sqlalchemy==2.0.30
+python-dotenv==1.2.3
+bcrypt==5.0.0
+requests==2.34.2

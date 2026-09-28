@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipcheck - AI Pre-Ship Auditor</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    Shipcheck
+                </h1>
+                <p class="tagline">AI Pre-Ship Auditor with Hindsight Memory</p>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Project Selection / Upload -->
+            <section id="project-section" class="section active">
+                <div class="card">
+                    <h2>Select or Upload a Project</h2>
+                    <div class="projects-list" id="projects-list">
+                        <div class="loading" id="projects-loading">Loading projects...</div>
+                    </div>
+
+                    <div class="divider">or</div>
+
+                    <div class="upload-area" id="upload-area">
+                        <input type="file" id="zip-upload" accept=".zip" style="display: none;">
+                        <div class="upload-content">
+                            <svg class="upload-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                            <p>Drag & drop a ZIP file or click to browse</p>
+                            <span class="hint">Maximum file size: 100MB</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scan Progress -->
+            <section id="scan-section" class="section" style="display: none;">
+                <div class="card">
+                    <div class="scan-header">
+                        <h2>Scan in Progress</h2>
+                        <span class="scan-status-badge" id="scan-status-badge">Queued</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <p class="progress-message" id="progress-message">Initializing...</p>
+                    <div class="scan-steps" id="scan-steps">
+                        <div class="step" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Analyzing project structure</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Detecting technologies</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Running security checks</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Running privacy checks</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="5">
+                            <span class="step-number">5</span>
+                            <span class="step-label">Running reliability checks</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="6">
+                            <span class="step-number">6</span>
+                            <span class="step-label">Running production checks</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="7">
+                            <span class="step-number">7</span>
+                            <span class="step-label">Running runtime analysis</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="8">
+                            <span class="step-number">8</span>
+                            <span class="step-label">Running AI reasoning</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="9">
+                            <span class="step-number">9</span>
+                            <span class="step-label">Updating Hindsight memory</span>
+                            <span class="step-icon"></span>
+                        </div>
+                        <div class="step" data-step="10">
+                            <span class="step-number">10</span>
+                            <span class="step-label">Generating report</span>
+                            <span class="step-icon"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Report View -->
+            <section id="report-section" class="section" style="display: none;">
+                <div class="report-header">
+                    <div class="report-title">
+                        <h2>Pre-Ship Report</h2>
+                        <span class="project-name" id="report-project-name"></span>
+                    </div>
+                    <div class="report-actions">
+                        <button class="btn btn-secondary" id="rescan-btn">Rescan</button>
+                        <button class="btn btn-primary" id="download-btn">Download Report</button>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-grid" id="summary-grid"></div>
+
+                <!-- Hindsight Comparison -->
+                <div class="card" id="comparison-card" style="display: none;">
+                    <h3>Hindsight Comparison</h3>
+                    <div class="comparison-summary" id="comparison-summary"></div>
+                    <div class="comparison-details" id="comparison-details"></div>
+                </div>
+
+                <!-- AI Analysis -->
+                <div class="card" id="ai-analysis-card" style="display: none;">
+                    <h3>AI Analysis</h3>
+                    <div class="ai-content" id="ai-content"></div>
+                </div>
+
+                <!-- Findings Tabs -->
+                <div class="card">
+                    <div class="tabs" id="category-tabs">
+                        <button class="tab-btn active" data-category="all">All</button>
+                        <button class="tab-btn" data-category="security">Security</button>
+                        <button class="tab-btn" data-category="privacy">Privacy</button>
+                        <button class="tab-btn" data-category="reliability">Reliability</button>
+                        <button class="tab-btn" data-category="production">Production</button>
+                        <button class="tab-btn" data-category="runtime">Runtime</button>
+                    </div>
+
+                    <div class="findings-list" id="findings-list">
+                        <div class="loading">Loading findings...</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
