@@ -18,33 +18,50 @@
 
 ## 🏗️ System Architecture
 
-```
-                                    +-----------------------+
-                                    |   Frontend UI (SPA)   |
-                                    |  (HTML5 / CSS / JS)   |
-                                    +-----------+-----------+
-                                                |
-                                                v  HTTP / REST API
-                                    +-----------+-----------+
-                                    |  FastAPI Backend App  |
-                                    |    (main.py, Uvicorn) |
-                                    +-----------+-----------+
-                                                |
-                     +--------------------------+--------------------------+
-                     |                          |                          |
-                     v                          v                          v
-       +-------------+------------+   +---------+---------+   +------------+------------+
-       |   Project & Scan Routers |   |  Scanners Engine   |   |   Hindsight Memory Service |
-       |  (/api/projects, /scans) |   |  (AST & Pattern)  |   |    (hindsight.py & DB)    |
-       +-------------+------------+   +---------+---------+   +------------+------------+
-                     |                          |                          |
-                     +--------------------------+--------------------------+
-                                                |
-                                                v
-                                    +-----------+-----------+
-                                    |  SQLite Database      |
-                                    |    (shipcheck.db)     |
-                                    +-----------------------+
+```mermaid
+graph TD
+    Developer((Developer)) -->|uses| Dashboard[Dashboard SPA<br>[app.js]]
+    Dashboard -->|HTTP requests| FastAPI[FastAPI App<br>[main.py]]
+    FastAPI -->|retrieves reports| Dashboard
+    
+    subgraph Application API
+        FastAPI -->|mounts router| ProjectAPI[Project API<br>[projects.py]]
+        FastAPI -->|mounts router| ScanAPI[Scan API<br>[scans.py]]
+        FastAPI -->|mounts router| ReportsAPI[Reports API<br>[reports.py]]
+        FastAPI -->|mounts router| HindsightAPI[Hindsight API<br>[hindsight.py]]
+    end
+    
+    subgraph Audit Pipeline
+        ProjectAPI -->|stores uploads| UploadedProjects[(Uploaded Projects<br>[schema.py])]
+        ProjectAPI -->|detects context| ProjectDetector[Project Detector]
+        ProjectDetector -->|inspects project| UploadedProjects
+        
+        ScanAPI -->|runs scan| ScanOrchestrator[Scan Orchestrator<br>[scanner.py]]
+        
+        ScanOrchestrator -->|scans files| SecurityChecks[Security Checks<br>[security.py]]
+        ScanOrchestrator -->|dispatches| PrivacyChecks[Privacy Checks<br>[privacy.py]]
+        ScanOrchestrator -->|dispatches| ProductionChecks[Production Checks<br>[production.py]]
+        ScanOrchestrator -->|dispatches| ReliabilityChecks[Reliability Checks<br>[reliability.py]]
+        ScanOrchestrator -->|requests remediation| AIRemediation[AI Remediation<br>[llm.py]]
+        
+        SecurityChecks -->|creates findings| FindingModel[Finding Model<br>[base.py]]
+        PrivacyChecks -->|creates findings| FindingModel
+        ProductionChecks -->|creates findings| FindingModel
+        ReliabilityChecks -->|creates findings| FindingModel
+        AIRemediation -->|creates findings| FindingModel
+    end
+    
+    subgraph Reports And Memory
+        ScanAPI -->|records scan| SQLiteStore[(SQLite Store<br>[schema.py])]
+        ReportsAPI -->|reads and updates| SQLiteStore
+        HindsightAPI -->|persists and compares| SQLiteStore
+        HindsightAPI -->|records memory| HindsightService[Hindsight Service<br>[hindsight.py]]
+        HindsightService -->|stores history| SQLiteStore
+    end
+    
+    AIRemediation -.->|generates analysis| GrokAPI[Grok API]
+    AIRemediation -.->|generates analysis| GeminiAPI[Gemini API]
+    HindsightService -.->|retains scan context| GeminiAPI
 ```
 
 ---
