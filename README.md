@@ -13,6 +13,7 @@
 * **🧠 Hindsight Memory Engine**: Tracks historical scans per project to distinguish between **New**, **Unresolved**, **Fixed**, and **Reintroduced** issues across codebase iterations.
 * **🤖 AI-Powered Remediation**: Generates detailed explanations, priority orderings, and exact code fix recommendations powered by LLM integration.
 * **📊 Modern Glassmorphism Dashboard**: Responsive Single-Page Application (SPA) frontend providing real-time scan progress visualization, category filters, and downloadable JSON audit reports.
+* **📦 Standalone Executable**: Single `.exe` file with bundled frontend and backend — no Python installation required on target machines.
 
 ---
 
@@ -97,6 +98,8 @@ Shipcheck/
 │   ├── index.html             # Dashboard markup & SPA layout
 │   ├── app.js                 # Frontend application logic & API client
 │   └── styles.css             # Glassmorphism dark-mode CSS design system
+├── dist/
+│   └── Shipcheck.exe          # Standalone Windows executable (built artifact)
 ├── .env.example               # Environment variables configuration guide
 └── README.md                  # Detailed project documentation
 ```
@@ -179,7 +182,7 @@ Shipcheck's scanning engine ([`backend/services/scanner.py`](file:///c:/Users/Aj
 * Python 3.9+ installed
 * Virtual environment (`venv`)
 
-### Installation & Execution
+### Installation & Execution (Development Mode)
 
 1. **Activate the Virtual Environment**:
    ```powershell
@@ -203,6 +206,47 @@ Shipcheck's scanning engine ([`backend/services/scanner.py`](file:///c:/Users/Aj
    ```
    http://127.0.0.1:8000
    ```
+
+---
+
+## 📦 Building & Running Standalone Executable (Windows)
+
+Shipcheck can be packaged as a single `.exe` file that includes both the FastAPI backend and the SPA frontend — no Python installation required on the target machine.
+
+### Building the Executable
+
+```powershell
+# Activate virtual environment
+.\venv\Scripts\Activate.ps1
+
+# Install PyInstaller
+pip install pyinstaller
+
+# Build the executable
+python -m pyinstaller Shipcheck.spec --clean
+```
+
+The executable will be created at `dist/Shipcheck.exe`.
+
+### Running the Executable
+
+```powershell
+# Navigate to dist folder
+cd dist
+
+# Run Shipcheck
+.\Shipcheck.exe
+```
+
+The server starts at **http://127.0.0.1:8001** with:
+- **Frontend Dashboard**: `http://127.0.0.1:8001/`
+- **API Endpoints**: `http://127.0.0.1:8001/api/*`
+- **Health Check**: `http://127.0.0.1:8001/api/health`
+
+### Notes
+- The executable creates its own `projects/` directory and `shipcheck.db` SQLite database in the same folder as the `.exe`
+- LLM features (AI remediation) require `GEMINI_API_KEY` or `GROK_API_KEY` in `.env` file alongside the executable
+- Port 8001 is used by default to avoid conflicts with development servers on 8000
 
 ---
 

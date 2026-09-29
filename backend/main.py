@@ -1,7 +1,6 @@
 """Main FastAPI application for Shipcheck AI Pre-Ship Auditor."""
 
 import os
-from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -12,28 +11,19 @@ from api import projects, scans, reports, hindsight
 from services.hindsight import HindsightService
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan manager."""
-    # Startup
-    init_db()
-    print("Database initialized")
+# Initialize database synchronously before app creation
+init_db()
+print("Database initialized")
 
-    # Create projects directory
-    projects_dir = os.environ.get("SHIPCHECK_PROJECTS_DIR", "./projects")
-    os.makedirs(projects_dir, exist_ok=True)
-
-    yield
-
-    # Shutdown
-    print("Application shutting down")
+# Create projects directory
+projects_dir = os.environ.get("SHIPCHECK_PROJECTS_DIR", "./projects")
+os.makedirs(projects_dir, exist_ok=True)
 
 
 app = FastAPI(
     title="Shipcheck - AI Pre-Ship Auditor",
     description="AI-powered software pre-ship auditor with Hindsight memory",
     version="1.0.0",
-    lifespan=lifespan
 )
 
 # CORS middleware for frontend
@@ -64,8 +54,15 @@ async def version():
     return {"version": "1.0.0", "name": "Shipcheck"}
 
 
+import sys
+
 # Serve frontend static files
-frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if getattr(sys, "frozen", False):
+    base_dir = getattr(sys, "_MEIPASS", os.path.dirname(__file__))
+    frontend_dir = os.path.join(base_dir, "frontend")
+else:
+    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
+
 if os.path.exists(frontend_dir):
     app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
 
@@ -75,7 +72,7 @@ if os.path.exists(frontend_dir):
         index_path = os.path.join(frontend_dir, "index.html")
         if os.path.exists(index_path):
             return FileResponse(index_path)
-        return {"message": "Frontend not built yet. Visit /docs for API documentation."}
+        return {"message": "Frontend not found."}
 
     @app.get("/{path:path}")
     async def serve_frontend_paths(path: str):
