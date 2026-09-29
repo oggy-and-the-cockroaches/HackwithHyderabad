@@ -23,11 +23,11 @@ class LLMProvider(ABC):
 class GeminiProvider(LLMProvider):
     """Google Gemini LLM provider."""
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.0-flash"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.5-flash"):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
-        self.model_name = model
+        self.model_name = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
         self._genai = None
-        if self.api_key:
+        if self.api_key and self.api_key != "your_gemini_api_key_here":
             try:
                 import google.generativeai as genai
                 self._genai = genai
@@ -36,16 +36,37 @@ class GeminiProvider(LLMProvider):
                 pass
 
     def generate(self, prompt: str, system_prompt: Optional[str] = None) -> str:
-        if not self._genai:
-            return "LLM not configured (missing google-generativeai or API key)"
-        model = self._genai.GenerativeModel(self.model_name)
-        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-        response = model.generate_content(full_prompt)
-        return response.text
+        if not self.api_key or self.api_key == "your_gemini_api_key_here":
+            return "LLM not configured (missing GEMINI_API_KEY in .env)"
+
+        if self._genai:
+            try:
+                model = self._genai.GenerativeModel(self.model_name)
+                full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+                response = model.generate_content(full_prompt)
+                return response.text
+            except Exception as e:
+                # Fallback to direct HTTP call if SDK model fails
+                pass
+
+        # Direct REST API fallback
+        import urllib.request
+        import urllib.parse
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
+        headers = {"Content-Type": "application/json"}
+        contents = [{"role": "user", "parts": [{"text": f"{system_prompt}\n\n{prompt}" if system_prompt else prompt}]}]
+        data = json.dumps({"contents": contents}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers=headers)
+        try:
+            with urllib.request.urlopen(req) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result["candidates"][0]["content"]["parts"][0]["text"]
+        except Exception as err:
+            return f"Gemini API Error ({self.model_name}): {str(err)}"
 
     def generate_json(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
-        if not self._genai:
-            return {"error": "LLM not configured", "summary": "AI analysis unavailable - LLM not configured"}
+        if not self.api_key or self.api_key == "your_gemini_api_key_here":
+            return {"error": "LLM not configured", "summary": "AI analysis unavailable - missing GEMINI_API_KEY"}
         json_prompt = f"{prompt}\n\nRespond with valid JSON only, no markdown formatting."
         full_system = f"{system_prompt}\n\nYou must respond with valid JSON only." if system_prompt else "You must respond with valid JSON only."
         response = self.generate(json_prompt, full_system)
@@ -54,7 +75,10 @@ class GeminiProvider(LLMProvider):
             response = response.split("```", 2)[1]
             if response.startswith("json"):
                 response = response[4:]
-        return json.loads(response)
+        try:
+            return json.loads(response)
+        except Exception:
+            return {"raw_response": response, "summary": "AI generated analysis"}
 
 
 class GrokProvider(LLMProvider):
@@ -107,15 +131,11 @@ def get_llm_provider() -> Optional[LLMProvider]:
 
     if provider == "gemini":
         api_key = os.environ.get("GEMINI_API_KEY")
-        if not api_key:
-            return None
-        model = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+        model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
         return GeminiProvider(api_key=api_key, model=model)
 
     elif provider == "grok":
         api_key = os.environ.get("GROK_API_KEY")
-        if not api_key:
-            return None
         model = os.environ.get("GROK_MODEL", "grok-3")
         return GrokProvider(api_key=api_key, model=model)
 
@@ -127,10 +147,9 @@ _llm_provider: Optional[LLMProvider] = None
 
 
 def get_llm() -> Optional[LLMProvider]:
-    """Get the configured LLM provider (cached)."""
+    """Get the configured LLM provider."""
     global _llm_provider
-    if _llm_provider is None:
-        _llm_provider = get_llm_provider()
+    _llm_provider = get_llm_provider()
     return _llm_provider
 
 

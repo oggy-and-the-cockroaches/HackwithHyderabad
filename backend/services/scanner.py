@@ -400,7 +400,15 @@ Analyze these findings and provide a prioritized audit report.
 """
 
         try:
-            result = llm.generate_json(prompt, system_prompt)
+            result = await asyncio.to_thread(llm.generate_json, prompt, system_prompt)
+            if isinstance(result, dict) and "priorities" in result:
+                for priority in result.get("priorities", []):
+                    p_title = priority.get("title", "")
+                    p_action = priority.get("action", "")
+                    if p_title and p_action:
+                        for f in self.all_findings:
+                            if p_title.lower() in f.title.lower() or f.title.lower() in p_title.lower():
+                                f.recommendation = f"[Gemini 2.5 Flash] {p_action}"
             return result
         except Exception as e:
             return {"error": f"AI reasoning failed: {str(e)}", "summaries": []}
