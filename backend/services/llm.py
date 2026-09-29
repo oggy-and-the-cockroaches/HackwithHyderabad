@@ -21,17 +21,16 @@ class LLMProvider(ABC):
 
 
 class GeminiProvider(LLMProvider):
-    """Google Gemini LLM provider."""
+    """Google Gemini LLM provider using modern google-genai SDK."""
 
     def __init__(self, api_key: Optional[str] = None, model: str = "gemini-2.5-flash"):
         self.api_key = api_key or os.environ.get("GEMINI_API_KEY")
         self.model_name = model or os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-        self._genai = None
+        self._client = None
         if self.api_key and self.api_key != "your_gemini_api_key_here":
             try:
-                import google.generativeai as genai
-                self._genai = genai
-                genai.configure(api_key=self.api_key)
+                from google import genai
+                self._client = genai.Client(api_key=self.api_key)
             except ImportError:
                 pass
 
@@ -39,14 +38,17 @@ class GeminiProvider(LLMProvider):
         if not self.api_key or self.api_key == "your_gemini_api_key_here":
             return "LLM not configured (missing GEMINI_API_KEY in .env)"
 
-        if self._genai:
+        full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
+
+        if self._client:
             try:
-                model = self._genai.GenerativeModel(self.model_name)
-                full_prompt = f"{system_prompt}\n\n{prompt}" if system_prompt else prompt
-                response = model.generate_content(full_prompt)
+                response = self._client.models.generate_content(
+                    model=self.model_name,
+                    contents=full_prompt,
+                )
                 return response.text
             except Exception as e:
-                # Fallback to direct HTTP call if SDK model fails
+                # Fallback to direct HTTP call if SDK call fails
                 pass
 
         # Direct REST API fallback
@@ -54,7 +56,7 @@ class GeminiProvider(LLMProvider):
         import urllib.parse
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model_name}:generateContent?key={self.api_key}"
         headers = {"Content-Type": "application/json"}
-        contents = [{"role": "user", "parts": [{"text": f"{system_prompt}\n\n{prompt}" if system_prompt else prompt}]}]
+        contents = [{"role": "user", "parts": [{"text": full_prompt}]}]
         data = json.dumps({"contents": contents}).encode("utf-8")
         req = urllib.request.Request(url, data=data, headers=headers)
         try:
