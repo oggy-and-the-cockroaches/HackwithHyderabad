@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
 from database.schema import init_db
-from api import projects, scans, reports
+from api import projects, scans, reports, hindsight
 from services.hindsight import HindsightService
 
 
@@ -49,6 +49,7 @@ app.add_middleware(
 app.include_router(projects.router)
 app.include_router(scans.router)
 app.include_router(reports.router)
+app.include_router(hindsight.router)
 
 
 @app.get("/api/health")

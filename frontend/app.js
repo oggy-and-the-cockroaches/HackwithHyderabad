@@ -63,7 +63,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loadProjects();
     setupUpload();
+    checkHindsightStatus();
 });
+
+// Check Hindsight Engine status
+async function checkHindsightStatus() {
+    const badgeText = $('hindsight-status-text');
+    const badge = $('hindsight-status-badge');
+    if (!badgeText || !badge) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/hindsight/status`);
+        const status = await response.json();
+        if (status.connected) {
+            badgeText.textContent = `🧠 Hindsight Cloud Active (${status.bank_id})`;
+            badge.style.background = '#ecfdf5';
+            badge.style.color = '#047857';
+            badge.style.borderColor = '#a7f3d0';
+            badge.querySelector('.status-dot').style.background = '#10b981';
+        } else if (status.api_configured) {
+            badgeText.textContent = '🧠 Hindsight Configured (Offline Fallback)';
+            badge.style.background = '#fef3c7';
+            badge.style.color = '#b45309';
+            badge.style.borderColor = '#fde68a';
+            badge.querySelector('.status-dot').style.background = '#f59e0b';
+        } else {
+            badgeText.textContent = '🧠 Hindsight Local SQLite Engine';
+        }
+    } catch (e) {
+        console.warn('Failed to fetch Hindsight status:', e);
+    }
+}
 
 // Load projects
 async function loadProjects() {

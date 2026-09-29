@@ -9,15 +9,21 @@
 <body>
     <div class="app">
         <header class="header">
-            <div class="header-content">
-                <h1 class="logo">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M9 11l3 3L22 4"></path>
-                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                    </svg>
-                    Shipcheck
-                </h1>
-                <p class="tagline">AI Pre-Ship Auditor with Hindsight Memory</p>
+            <div class="header-content" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1 class="logo">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        Shipcheck
+                    </h1>
+                    <p class="tagline">AI Pre-Ship Auditor with Hindsight Memory</p>
+                </div>
+                <div id="hindsight-status-badge" class="hindsight-badge" style="display: flex; align-items: center; gap: 8px; background: #e0f2fe; color: #0369a1; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; border: 1px solid #bae6fd;">
+                    <span class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: #0284c7;"></span>
+                    <span id="hindsight-status-text">🧠 Hindsight Engine Connected</span>
+                </div>
             </div>
         </header>
 
